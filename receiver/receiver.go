@@ -1,0 +1,75 @@
+package receiver
+
+import (
+	"context"
+	"errors"
+	"sync"
+)
+
+// Receiver 是一个泛型结构体，用于通过 id 管理不同的通道，以便通信
+type Receiver[T any] struct {
+	ch map[string]chan T // 存储 id 与通道的映射关系
+	mu sync.Mutex        // 用于确保并发安全
+}
+
+// NewReceiver 创建并返回一个新的 Receiver 实例
+func NewReceiver[T any]() *Receiver[T] {
+	return &Receiver[T]{
+		ch: make(map[string]chan T),
+	}
+}
+
+// Put 向指定 id 的通道发送数据，若通道不存在返回 false，不阻塞于锁内
+// ctx 支持超时控制
+func (r *Receiver[T]) Put(ctx context.Context, id string, data T) (bool, error) {
+	r.mu.Lock()
+	ch, ok := r.ch[id]
+	r.mu.Unlock()
+	if !ok {
+		// 没有对应 id 的通道，返回 false
+		return false, nil
+	}
+	select {
+	case <-ctx.Done():
+		// 上下文取消或超时
+		return false, ctx.Err()
+	case ch <- data:
+	}
+	return true, nil
+}
+
+// Get 为指定 id 创建响应通道并返回一个接收函数
+// 若该 id 已存在，返回一个错误函数，避免重复创建
+func (r *Receiver[T]) Get(ctx context.Context, id string) func() (T, error) {
+	var zero T
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.ch[id]; ok {
+		// 如果该 id 已存在，返回错误的接收函数
+		return func() (T, error) {
+			return zero, errors.New("response already exists: " + id)
+		}
+	}
+	ch := make(chan T)
+	r.ch[id] = ch
+	// 返回一个接收函数，等待数据或 ctx 超时/取消
+	return func() (T, error) {
+		defer func() {
+			r.mu.Lock()
+			delete(r.ch, id) // 接收完毕后，从映射中删除通道
+			r.mu.Unlock()
+			close(ch)
+		}()
+		select {
+		case <-ctx.Done():
+			// 上下文取消或超时
+			return zero, ctx.Err()
+		case data, ok := <-ch:
+			if !ok {
+				// 通道已关闭
+				return zero, errors.New("response channel closed")
+			}
+			return data, nil
+		}
+	}
+}
