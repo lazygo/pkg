@@ -3,12 +3,14 @@ module github.com/lazygo/pkg
 go 1.25.0
 
 require (
+	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/lazygo/lazygo v0.7.7
 	github.com/shirou/gopsutil/v4 v4.26.1
 	github.com/silenceper/wechat/v2 v2.1.12
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.48
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.1.49
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.72
+	golang.org/x/time v0.14.0
 )
 
 require (

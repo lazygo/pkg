@@ -10,8 +10,8 @@ import (
 	"slices"
 	"strconv"
 
-	"git.code.tencent.com/mdc/pilicat/pkg/token"
 	"github.com/cristalhq/jwt/v3"
+	"github.com/lazygo/pkg/token"
 )
 
 type Claims jwt.StandardClaims
