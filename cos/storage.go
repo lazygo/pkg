@@ -32,12 +32,12 @@ func Init(conf Config) error {
 	return nil
 }
 
-func Upload(name string, r io.Reader) error {
+func Upload(ctx context.Context, filePath string, r io.Reader) error {
 	if client == nil {
 		return ErrUninitialized
 	}
 
-	_, err := client().Object.Put(context.Background(), "upload/"+name, r, nil)
+	_, err := client().Object.Put(ctx, filePath, r, nil)
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,12 @@ func Upload(name string, r io.Reader) error {
 	return nil
 }
 
-func Download(name string) (io.ReadCloser, error) {
+func Download(ctx context.Context, filePath string) (io.ReadCloser, error) {
 	if client == nil {
 		return nil, ErrUninitialized
 	}
 
-	resp, err := client().Object.Get(context.Background(), name, nil)
+	resp, err := client().Object.Get(ctx, filePath, nil)
 	if err != nil {
 		return nil, err
 	}
