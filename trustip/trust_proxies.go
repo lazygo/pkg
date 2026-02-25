@@ -4,8 +4,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
-	"github.com/lazygo/lazygo/server"
 )
 
 type ipChecker struct {
@@ -58,6 +56,33 @@ func newIPChecker(configs []TrustOption) *ipChecker {
 	return checker
 }
 
+type xHeader struct {
+	xff    string
+	realIP string
+}
+
+type XHeaderOption func(*xHeader)
+
+func XffsHeader(header string) XHeaderOption {
+	return func(c *xHeader) {
+		c.xff = header
+	}
+}
+
+func RealIPHeader(header string) XHeaderOption {
+	return func(c *xHeader) {
+		c.realIP = header
+	}
+}
+
+func newXHeader(configs []XHeaderOption) *xHeader {
+	xh := &xHeader{}
+	for _, configure := range configs {
+		configure(xh)
+	}
+	return xh
+}
+
 func (c *ipChecker) trust(ip net.IP) bool {
 	if c.trustLoopback && ip.IsLoopback() {
 		return true
@@ -91,10 +116,11 @@ func extractIP(req *http.Request) string {
 
 // ExtractIPFromRealIPHeader extracts IP address using x-real-ip header.
 // Use this if you put proxy which uses this header.
-func ExtractIPFromRealIPHeader(options ...TrustOption) IPExtractor {
+func ExtractIPFromRealIPHeader(headerOptions []XHeaderOption, options ...TrustOption) IPExtractor {
 	checker := newIPChecker(options)
+	xh := newXHeader(headerOptions)
 	return func(req *http.Request) string {
-		realIP := req.Header.Get(server.HeaderXRealIP)
+		realIP := req.Header.Get(xh.realIP)
 		if realIP != "" {
 			realIP = strings.TrimPrefix(realIP, "[")
 			realIP = strings.TrimSuffix(realIP, "]")
@@ -109,11 +135,12 @@ func ExtractIPFromRealIPHeader(options ...TrustOption) IPExtractor {
 // ExtractIPFromXFFHeader extracts IP address using x-forwarded-for header.
 // Use this if you put proxy which uses this header.
 // This returns nearest untrustable IP. If all IPs are trustable, returns furthest one (i.e.: XFF[0]).
-func ExtractIPFromXFFHeader(options ...TrustOption) IPExtractor {
+func ExtractIPFromXFFHeader(headerOptions []XHeaderOption, options ...TrustOption) IPExtractor {
 	checker := newIPChecker(options)
+	xh := newXHeader(headerOptions)
 	return func(req *http.Request) string {
 		directIP := extractIP(req)
-		xffs := req.Header[server.HeaderXForwardedFor]
+		xffs := req.Header[xh.xff]
 		if len(xffs) == 0 {
 			return directIP
 		}

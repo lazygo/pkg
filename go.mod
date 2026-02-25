@@ -4,7 +4,6 @@ go 1.25.0
 
 require (
 	github.com/cristalhq/jwt/v3 v3.1.0
-	github.com/lazygo/lazygo v0.7.7
 	github.com/shirou/gopsutil/v4 v4.26.1
 	github.com/silenceper/wechat/v2 v2.1.12
 	github.com/smartwalle/alipay/v3 v3.2.29
@@ -19,7 +18,6 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
-	github.com/coder/websocket v1.8.14 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/ebitengine/purego v0.9.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
