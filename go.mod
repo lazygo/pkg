@@ -7,9 +7,11 @@ require (
 	github.com/lazygo/lazygo v0.7.7
 	github.com/shirou/gopsutil/v4 v4.26.1
 	github.com/silenceper/wechat/v2 v2.1.12
+	github.com/smartwalle/alipay/v3 v3.2.29
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.48
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.1.49
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.72
+	github.com/wechatpay-apiv3/wechatpay-go v0.2.21
 	golang.org/x/time v0.14.0
 )
 
@@ -29,6 +31,9 @@ require (
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/smartwalle/ncrypto v1.0.4 // indirect
+	github.com/smartwalle/ngx v1.1.0 // indirect
+	github.com/smartwalle/nsign v1.0.9 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/tidwall/gjson v1.14.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
