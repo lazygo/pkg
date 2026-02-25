@@ -116,9 +116,9 @@ func extractIP(req *http.Request) string {
 
 // ExtractIPFromRealIPHeader extracts IP address using x-real-ip header.
 // Use this if you put proxy which uses this header.
-func ExtractIPFromRealIPHeader(headerOptions []XHeaderOption, options ...TrustOption) IPExtractor {
+func ExtractIPFromRealIPHeader(realIPHeaderOption XHeaderOption, options ...TrustOption) IPExtractor {
 	checker := newIPChecker(options)
-	xh := newXHeader(headerOptions)
+	xh := newXHeader([]XHeaderOption{realIPHeaderOption})
 	return func(req *http.Request) string {
 		realIP := req.Header.Get(xh.realIP)
 		if realIP != "" {
@@ -135,9 +135,9 @@ func ExtractIPFromRealIPHeader(headerOptions []XHeaderOption, options ...TrustOp
 // ExtractIPFromXFFHeader extracts IP address using x-forwarded-for header.
 // Use this if you put proxy which uses this header.
 // This returns nearest untrustable IP. If all IPs are trustable, returns furthest one (i.e.: XFF[0]).
-func ExtractIPFromXFFHeader(headerOptions []XHeaderOption, options ...TrustOption) IPExtractor {
+func ExtractIPFromXFFHeader(xffHeaderOption XHeaderOption, options ...TrustOption) IPExtractor {
 	checker := newIPChecker(options)
-	xh := newXHeader(headerOptions)
+	xh := newXHeader([]XHeaderOption{xffHeaderOption})
 	return func(req *http.Request) string {
 		directIP := extractIP(req)
 		xffs := req.Header[xh.xff]
