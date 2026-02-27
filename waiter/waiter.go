@@ -47,7 +47,7 @@ func (r *Waiter[T]) Get(ctx context.Context, id string) func() (T, error) {
 	if _, ok := r.ch[id]; ok {
 		// 如果该 id 已存在，返回错误的接收函数
 		return func() (T, error) {
-			return zero, errors.New("response already exists: " + id)
+			return zero, errors.New("waiter already exists: " + id)
 		}
 	}
 	ch := make(chan T)
@@ -67,7 +67,7 @@ func (r *Waiter[T]) Get(ctx context.Context, id string) func() (T, error) {
 		case data, ok := <-ch:
 			if !ok {
 				// 通道已关闭
-				return zero, errors.New("response channel closed")
+				return zero, errors.New("waiter closed")
 			}
 			return data, nil
 		}
