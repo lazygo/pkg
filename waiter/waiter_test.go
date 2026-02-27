@@ -1,4 +1,4 @@
-package receiver
+package waiter
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-func TestReceiver_PutAndGet_Success(t *testing.T) {
-	r := NewReceiver[int]()
+func TestWaiter_PutAndGet_Success(t *testing.T) {
+	r := NewWaiter[int]()
 	id := "123"
 	ctx := context.Background()
 
-	recv := r.Get(ctx, id)
+	wait := r.Get(ctx, id)
 	go func() {
 		ok, err := r.Put(ctx, id, 42)
 		if err != nil {
@@ -23,7 +23,7 @@ func TestReceiver_PutAndGet_Success(t *testing.T) {
 			fmt.Println("Put should return false")
 		}
 	}()
-	val, err := recv()
+	val, err := wait()
 	if err != nil {
 		t.Fatalf("Get() returned error: %v", err)
 	}
@@ -32,8 +32,8 @@ func TestReceiver_PutAndGet_Success(t *testing.T) {
 	}
 }
 
-func TestReceiver_Put_NoSuchChannel(t *testing.T) {
-	r := NewReceiver[string]()
+func TestWaiter_Put_NoSuchChannel(t *testing.T) {
+	r := NewWaiter[string]()
 	ctx := context.Background()
 	ok, err := r.Put(ctx, "no-exist", "hello")
 	if err != nil {
@@ -44,29 +44,29 @@ func TestReceiver_Put_NoSuchChannel(t *testing.T) {
 	}
 }
 
-func TestReceiver_Get_Duplicate(t *testing.T) {
-	r := NewReceiver[int]()
+func TestWaiter_Get_Duplicate(t *testing.T) {
+	r := NewWaiter[int]()
 	id := "xx"
 	ctx := context.Background()
 	r.Get(ctx, id) // First get should succeed
 
-	recv2 := r.Get(ctx, id)
-	_, err := recv2()
+	wait := r.Get(ctx, id)
+	_, err := wait()
 	if err == nil || !errors.Is(err, errors.New("response already exists: "+id)) && err.Error() != "response already exists: "+id {
 		t.Errorf("Expected response already exists error, got: %v", err)
 	}
 }
 
-func TestReceiver_Get_ContextTimeout(t *testing.T) {
-	r := NewReceiver[string]()
+func TestWaiter_Get_ContextTimeout(t *testing.T) {
+	r := NewWaiter[string]()
 	id := "test-timeout"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	recv := r.Get(ctx, id)
+	wait := r.Get(ctx, id)
 	start := time.Now()
-	val, err := recv()
+	val, err := wait()
 	duration := time.Since(start)
 
 	if err == nil || err != context.DeadlineExceeded {

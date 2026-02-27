@@ -1,4 +1,4 @@
-package receiver
+package waiter
 
 import (
 	"context"
@@ -6,22 +6,22 @@ import (
 	"sync"
 )
 
-// Receiver 是一个泛型结构体，用于通过 id 管理不同的通道，以便通信
-type Receiver[T any] struct {
+// Waiter 是一个泛型结构体，用于通过 id 管理不同的通道，以便通信
+type Waiter[T any] struct {
 	ch map[string]chan T // 存储 id 与通道的映射关系
 	mu sync.Mutex        // 用于确保并发安全
 }
 
-// NewReceiver 创建并返回一个新的 Receiver 实例
-func NewReceiver[T any]() *Receiver[T] {
-	return &Receiver[T]{
+// NewWaiter 创建并返回一个新的 Waiter 实例
+func NewWaiter[T any]() *Waiter[T] {
+	return &Waiter[T]{
 		ch: make(map[string]chan T),
 	}
 }
 
 // Put 向指定 id 的通道发送数据，若通道不存在返回 false，不阻塞于锁内
 // ctx 支持超时控制
-func (r *Receiver[T]) Put(ctx context.Context, id string, data T) (bool, error) {
+func (r *Waiter[T]) Put(ctx context.Context, id string, data T) (bool, error) {
 	r.mu.Lock()
 	ch, ok := r.ch[id]
 	r.mu.Unlock()
@@ -38,9 +38,9 @@ func (r *Receiver[T]) Put(ctx context.Context, id string, data T) (bool, error) 
 	return true, nil
 }
 
-// Get 为指定 id 创建响应通道并返回一个接收函数
+// Get 为指定 id 创建响应通道并返回一个等待函数
 // 若该 id 已存在，返回一个错误函数，避免重复创建
-func (r *Receiver[T]) Get(ctx context.Context, id string) func() (T, error) {
+func (r *Waiter[T]) Get(ctx context.Context, id string) func() (T, error) {
 	var zero T
 	r.mu.Lock()
 	defer r.mu.Unlock()
