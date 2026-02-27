@@ -81,3 +81,35 @@ func TestMask(t *testing.T) {
 		t.Error("mask fail", str)
 	}
 }
+
+func TestMask_Chinese(t *testing.T) {
+	// 全中文字符串
+	str := Mask("张三丰", 1, 1)
+	if str != "张*丰" {
+		t.Errorf("mask fail for Chinese, got: %q, want: %q", str, "张*丰")
+	}
+	str = Mask("李小龙", 1, 2)
+	if str != "李小龙" {
+		t.Errorf("mask fail for Chinese (1,2), got: %q, want: %q", str, "李小龙")
+	}
+	// 超出头尾
+	str = Mask("张三丰", 2, 3)
+	if str != "张三丰" {
+		t.Errorf("mask fail for Chinese, head+tail>len, got: %q, want: %q", str, "张三丰")
+	}
+	// 空字符串
+	str = Mask("", 1, 1)
+	if str != "" {
+		t.Errorf("mask fail for Chinese, empty string, got: %q, want: %q", str, "")
+	}
+	// 长度6的中文
+	str = Mask("我是一个大好人", 2, 2)
+	if str != "我是***好人" {
+		t.Errorf("mask fail for Chinese, long, got: %q, want: %q", str, "我是***好人")
+	}
+
+	str = Mask("13012345678", 2, 3)
+	if str != "13******678" {
+		t.Errorf("mask fail for Chinese, long, got: %q, want: %q", str, "13****678")
+	}
+}

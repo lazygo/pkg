@@ -1,7 +1,6 @@
 package goutils
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/binary"
 	"errors"
@@ -258,18 +257,21 @@ func ReverseBytes(data []byte) {
 	}
 }
 
-func Mask(str string, head int, tail int) string {
-	if head < 0 || tail < 0 {
+func Mask(str string, head, tail int) string {
+	if head < 0 || tail < 0 || str == "" {
 		return str
 	}
-	l := len(str)
+	runes := []rune(str)
+	l := len(runes)
 	if l <= head+tail {
 		return str
 	}
 	var builder strings.Builder
-	builder.Write([]byte(str[:head]))
-	builder.Write(bytes.Repeat([]byte{'*'}, min(l-tail-head, 6)))
-	builder.Write([]byte(str[l-tail:]))
+	builder.Grow(l)
+
+	builder.WriteString(string(runes[:head]))
+	builder.WriteString(strings.Repeat("*", min(l-head-tail, 6)))
+	builder.WriteString(string(runes[l-tail:]))
 
 	return builder.String()
 }
