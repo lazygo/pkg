@@ -8,14 +8,14 @@ import (
 
 // Waiter 是一个泛型结构体，用于通过 id 管理不同的通道，以便通信
 type Waiter[T any] struct {
-	ch map[string]chan T // 存储 id 与通道的映射关系
-	mu sync.Mutex        // 用于确保并发安全
+	ch map[string]chan<- T // 存储 id 与通道的映射关系
+	mu sync.Mutex          // 用于确保并发安全
 }
 
 // NewWaiter 创建并返回一个新的 Waiter 实例
 func NewWaiter[T any]() *Waiter[T] {
 	return &Waiter[T]{
-		ch: make(map[string]chan T),
+		ch: make(map[string]chan<- T),
 	}
 }
 

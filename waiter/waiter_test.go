@@ -52,8 +52,8 @@ func TestWaiter_Get_Duplicate(t *testing.T) {
 
 	wait := r.Get(ctx, id)
 	_, err := wait()
-	if err == nil || !errors.Is(err, errors.New("response already exists: "+id)) && err.Error() != "response already exists: "+id {
-		t.Errorf("Expected response already exists error, got: %v", err)
+	if err == nil || !errors.Is(err, errors.New("waiter already exists: "+id)) && err.Error() != "waiter already exists: "+id {
+		t.Errorf("Expected waiter already exists error, got: %v", err)
 	}
 }
 
