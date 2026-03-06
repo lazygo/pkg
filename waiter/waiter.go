@@ -40,7 +40,7 @@ func (r *Waiter[T]) Put(ctx context.Context, id string, data T) (bool, error) {
 
 // Get 为指定 id 创建响应通道并返回一个等待函数
 // 若该 id 已存在，返回一个错误函数，避免重复创建
-func (r *Waiter[T]) Get(ctx context.Context, id string) func() (T, error) {
+func (r *Waiter[T]) Get(ctx context.Context, id string) (func() (T, error), func()) {
 	var zero T
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -48,12 +48,12 @@ func (r *Waiter[T]) Get(ctx context.Context, id string) func() (T, error) {
 		// 如果该 id 已存在，返回错误的接收函数
 		return func() (T, error) {
 			return zero, errors.New("waiter already exists: " + id)
-		}
+		}, func() {}
 	}
 	ch := make(chan T)
 	r.ch[id] = ch
 	// 返回一个接收函数，等待数据或 ctx 超时/取消
-	return func() (T, error) {
+	waitFunc := func() (T, error) {
 		defer func() {
 			r.mu.Lock()
 			delete(r.ch, id) // 接收完毕后，从映射中删除通道
@@ -72,4 +72,11 @@ func (r *Waiter[T]) Get(ctx context.Context, id string) func() (T, error) {
 			return data, nil
 		}
 	}
+	cancelFunc := func() {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		delete(r.ch, id)
+		close(ch)
+	}
+	return waitFunc, cancelFunc
 }

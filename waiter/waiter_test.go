@@ -13,7 +13,7 @@ func TestWaiter_PutAndGet_Success(t *testing.T) {
 	id := "123"
 	ctx := context.Background()
 
-	wait := r.Get(ctx, id)
+	wait, _ := r.Get(ctx, id)
 	go func() {
 		ok, err := r.Put(ctx, id, 42)
 		if err != nil {
@@ -50,7 +50,7 @@ func TestWaiter_Get_Duplicate(t *testing.T) {
 	ctx := context.Background()
 	r.Get(ctx, id) // First get should succeed
 
-	wait := r.Get(ctx, id)
+	wait, _ := r.Get(ctx, id)
 	_, err := wait()
 	if err == nil || !errors.Is(err, errors.New("waiter already exists: "+id)) && err.Error() != "waiter already exists: "+id {
 		t.Errorf("Expected waiter already exists error, got: %v", err)
@@ -64,7 +64,7 @@ func TestWaiter_Get_ContextTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	wait := r.Get(ctx, id)
+	wait, _ := r.Get(ctx, id)
 	start := time.Now()
 	val, err := wait()
 	duration := time.Since(start)
