@@ -4,15 +4,15 @@ go 1.25.0
 
 require (
 	github.com/cristalhq/jwt/v3 v3.1.0
-	github.com/shirou/gopsutil/v4 v4.26.2
+	github.com/shirou/gopsutil/v4 v4.26.3
 	github.com/silenceper/wechat/v2 v2.1.12
 	github.com/smartwalle/alipay/v3 v3.2.29
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.51
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.1.49
-	github.com/tencentyun/cos-go-sdk-v5 v0.7.72
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.69
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.57
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.73
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.21
-	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
-	golang.org/x/time v0.14.0
+	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
+	golang.org/x/time v0.15.0
 )
 
 require (
