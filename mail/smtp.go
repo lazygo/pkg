@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/smtp"
 )
@@ -78,8 +77,7 @@ func DialSmtp(addr string) (*smtp.Client, error) {
 	}
 	conn, err := tls.Dial("tcp", addr, tlsConfig)
 	if err != nil {
-		log.Println("tls.Dial Error:", err)
-		return nil, err
+		return nil, fmt.Errorf("tls.Dial error: %w", err)
 	}
 
 	host, _, _ := net.SplitHostPort(addr)
@@ -92,37 +90,35 @@ func SendMailWithTLS(addr string, auth smtp.Auth, from string,
 	//create smtp client
 	c, err := DialSmtp(addr)
 	if err != nil {
-		log.Println("Create smtp client error:", err)
-		return err
+		return fmt.Errorf("create smtp client error: %w", err)
 	}
 	defer c.Close()
 	if auth != nil {
 		if ok, _ := c.Extension("AUTH"); ok {
 			if err = c.Auth(auth); err != nil {
-				log.Println("Error during AUTH", err)
-				return err
+				return fmt.Errorf("error during AUTH: %w", err)
 			}
 		}
 	}
 	if err = c.Mail(from); err != nil {
-		return err
+		return fmt.Errorf("mail error: %w", err)
 	}
 	for _, addr := range to {
 		if err = c.Rcpt(addr); err != nil {
-			return err
+			return fmt.Errorf("rcpt error: %w", err)
 		}
 	}
 	w, err := c.Data()
 	if err != nil {
-		return err
+		return fmt.Errorf("data error: %w", err)
 	}
 	_, err = w.Write(msg)
 	if err != nil {
-		return err
+		return fmt.Errorf("write error: %w", err)
 	}
 	err = w.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("close error: %w", err)
 	}
 	return c.Quit()
 }
