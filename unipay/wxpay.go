@@ -47,19 +47,25 @@ func NewWxpay(conf *WxpayConfig) (*Wxpay, error) {
 	if err != nil {
 		return nil, err
 	}
+	// PowerWeChat 的签名器（Base、Order 等每个服务客户端各持有一个实例）只支持 PKCS#8 私钥，
+	// 这里统一转成 PKCS#8 后经 KeyPath 传入；KeyPath 不是磁盘已有文件时，SDK 会把它当私钥内容直接解析
+	pkcs8, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8})
 
 	app, err := payment.NewPayment(&payment.UserConfig{
 		AppID:       conf.Appid,
 		MchID:       conf.MchID,
 		SerialNo:    conf.MchCertificateSerialNumber,
 		MchApiV3Key: conf.MchAPIv3Key,
+		KeyPath:     string(keyPEM),
 		NotifyURL:   conf.NotifyURL,
 	})
 	if err != nil {
 		return nil, err
 	}
-	// PowerWeChat 的签名器支持直接注入私钥对象，避免把私钥写到磁盘文件
-	app.Base.BaseClient.Signer.PrivateKey = privateKey
 
 	return &Wxpay{
 		config: conf,
