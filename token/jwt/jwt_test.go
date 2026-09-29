@@ -108,7 +108,7 @@ OU7cwpdopPhJ/J6Q+wIDAQAB
 	id = "2"
 	issuer := "p2link.cn"
 	audience := "p"
-	token, err = encoder.Encode(&Claims{Subject: id, Issuer: issuer, Audience: []string{audience}})
+	token, err = encoder.Encode(&Claims{Subject: id, Issuer: issuer, Audience: Audience{audience}})
 	if err != nil {
 		t.Error(err)
 	}

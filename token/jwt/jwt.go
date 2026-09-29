@@ -3,18 +3,17 @@ package jwt
 import (
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 
-	"github.com/cristalhq/jwt/v3"
+	"github.com/cristalhq/jwt/v5"
 	"github.com/lazygo/pkg/token"
 )
 
-type Claims jwt.StandardClaims
+type Claims = jwt.RegisteredClaims
+type Audience = jwt.Audience
 type Validator func(*Claims) error
 
 type JwtEncoder struct {
@@ -64,20 +63,10 @@ func (jd *JwtDncoder) Decode(str string) (*Claims, error) {
 		return nil, err
 	}
 
-	// 8. also you can parse and verify in 1 operation
-	token, err := jwt.ParseAndVerifyString(str, verifier)
-	if err != nil {
-		return nil, err
-	}
-
-	// 9. get standard claims
 	var claims Claims
-	err = json.Unmarshal(token.RawClaims(), &claims)
-	if err != nil {
+	if err := jwt.ParseClaims([]byte(str), verifier, &claims); err != nil {
 		return nil, err
 	}
-
-	// 10. verify claims
 	return &claims, nil
 }
 
@@ -134,16 +123,16 @@ func ParseToken(dec *JwtDncoder, str string, validator ...Validator) (uint64, in
 
 func VerifyIssuer(issuer string) Validator {
 	return func(claims *Claims) error {
-		if claims.Issuer != issuer {
-			return fmt.Errorf("invalid issuer: want: %s has: %s", claims.Issuer, issuer)
+		if claims.IsIssuer(issuer) {
+			return nil
 		}
-		return nil
+		return fmt.Errorf("invalid issuer: want: %s has: %s", claims.Issuer, issuer)
 	}
 }
 
 func VerifyAudience(audience string) Validator {
 	return func(claims *Claims) error {
-		if slices.Contains(claims.Audience, audience) {
+		if claims.IsForAudience(audience) {
 			return nil
 		}
 		return fmt.Errorf("invalid audience: want: %v has: %s", claims.Audience, audience)

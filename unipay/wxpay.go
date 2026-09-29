@@ -2,17 +2,17 @@ package unipay
 
 import (
 	"context"
-	"fmt"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"net/http"
 
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/native"
-	wxutils "github.com/wechatpay-apiv3/wechatpay-go/utils"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/kernel/models"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment"
+	notifyRequest "github.com/ArtisanCloud/PowerWeChat/v3/src/payment/notify/request"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/payment/order/request"
+	wxresponse "github.com/ArtisanCloud/PowerWeChat/v3/src/payment/order/response"
 )
 
 var _ unipay = (*Wxpay)(nil)
@@ -28,7 +28,7 @@ type WxpayConfig struct {
 
 type Wxpay struct {
 	config *WxpayConfig
-	client *core.Client
+	client *payment.Payment
 }
 
 var WxpayClient *Wxpay
@@ -40,109 +40,135 @@ func InitWxPay(conf *WxpayConfig) error {
 }
 
 func NewWxpay(conf *WxpayConfig) (*Wxpay, error) {
-	wx := &Wxpay{
+	if len(conf.MchAPIv3Key) != 32 {
+		return nil, errors.New("wechatpay: mch api v3 key must be 32 bytes")
+	}
+	privateKey, err := loadRSAPrivateKey(conf.MchPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	app, err := payment.NewPayment(&payment.UserConfig{
+		AppID:       conf.Appid,
+		MchID:       conf.MchID,
+		SerialNo:    conf.MchCertificateSerialNumber,
+		MchApiV3Key: conf.MchAPIv3Key,
+		NotifyURL:   conf.NotifyURL,
+	})
+	if err != nil {
+		return nil, err
+	}
+	// PowerWeChat 的签名器支持直接注入私钥对象，避免把私钥写到磁盘文件
+	app.Base.BaseClient.Signer.PrivateKey = privateKey
+
+	return &Wxpay{
 		config: conf,
-	}
-
-	mchPrivateKey, err := wxutils.LoadPrivateKey(conf.MchPrivateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := context.Background()
-	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力
-	opts := []core.ClientOption{
-		option.WithWechatPayAutoAuthCipher(wx.config.MchID, wx.config.MchCertificateSerialNumber, mchPrivateKey, wx.config.MchAPIv3Key),
-	}
-	wx.client, err = core.NewClient(ctx, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return wx, nil
+		client: app,
+	}, nil
 }
 
-// TradePreCreate
+// TradePreCreate Native 扫码支付下单，返回支付二维码链接
 // amount 单位为分
+// https://pay.weixin.qq.com/doc/v3/merchant/4012791863
 func (wx *Wxpay) TradePreCreate(outTradeNo string, subject string, amount uint) (any, string, error) {
-
-	trade := native.PrepayRequest{}
-	trade.Appid = core.String(wx.config.Appid)
-	trade.Mchid = core.String(wx.config.MchID)
-	// 支付宝回调地址（需要在支付宝后台配置）
-	// 支付成功后，支付宝会发送一个POST消息到该地址
-	trade.NotifyUrl = core.String(wx.config.NotifyURL)
-	// 支付成功之后，浏览器将会重定向到该 URL
-	// trade.ReturnURL = "http://localhost:8088/return"
-	// 支付标题
-	trade.Description = core.String(subject)
-	// 订单号，一个订单号只能支付一次
-	trade.OutTradeNo = core.String(outTradeNo)
-	// 销售产品码，与支付宝签约的产品码名称,目前仅支持FACE_TO_FACE_PAYMENT
-	// trade.ProductCode = "FACE_TO_FACE_PAYMENT"
-	// 金额
-	trade.Amount = &native.Amount{
-		Total: core.Int64(int64(amount)),
-	}
-
-	// pay.GoodsDetail = []*alipay.GoodsDetailItem{}
-	svc := native.NativeApiService{Client: wx.client}
-	// 得到prepay_id，以及调起支付所需的参数和签名
-	res, _, err := svc.Prepay(context.Background(), trade)
+	res, err := wx.client.Order.TransactionNative(context.Background(), &request.RequestNativePrepay{
+		PrepayBase: request.PrepayBase{
+			AppID:     wx.config.Appid,
+			MchID:     wx.config.MchID,
+			NotifyUrl: wx.config.NotifyURL,
+		},
+		Description: subject,
+		OutTradeNo:  outTradeNo,
+		Amount: &request.NativeAmount{
+			Total:    int(amount),
+			Currency: "CNY",
+		},
+	})
 	if err != nil {
 		return nil, "", err
 	}
-	return res, *res.CodeUrl, err
+	return res, res.CodeURL, nil
 }
 
+// TradeQuery 按商户订单号查询订单
+// https://pay.weixin.qq.com/doc/v3/merchant/4012791908
 func (wx *Wxpay) TradeQuery(outTradeNo string) (*Trade, error) {
-	trade := native.QueryOrderByOutTradeNoRequest{}
-	trade.Mchid = core.String(wx.config.MchID)
-	trade.OutTradeNo = core.String(outTradeNo)
-
-	svc := native.NativeApiService{Client: wx.client}
-	res, _, err := svc.QueryOrderByOutTradeNo(context.Background(), trade)
-	return &Trade{Transaction: res}, err
+	res, err := wx.client.Order.QueryByOutTradeNumber(context.Background(), outTradeNo)
+	if err != nil {
+		return nil, err
+	}
+	return &Trade{Transaction: res}, nil
 }
 
+// AckNotification 应答微信支付回调
+// https://pay.weixin.qq.com/doc/v3/merchant/4012791906
 func (wx *Wxpay) AckNotification(w http.ResponseWriter) error {
-	// 验签通过：商户需告知微信支付接收回调成功，HTTP应答状态码需返回200或204，无需返回应答报文。
-	// 验签不通过：商户需告知微信支付接收回调失败，HTTP应答状态码需返回5XX或4XX，同时需返回以下应答报文：
+	// 验签通过：HTTP 应答状态码返回 200 或 204，无需返回应答报文
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte(""))
 	return err
 }
 
-func (wx *Wxpay) Client() *core.Client {
+// Client 返回底层 PowerWeChat 支付实例，可用于调用未封装的接口
+func (wx *Wxpay) Client() *payment.Payment {
 	return wx.client
 }
 
+// Notify 解析微信支付回调：解密回调报文并返回订单
+// 解密失败（AES-GCM 校验不过）会返回错误，此时应返回 5xx 让微信重推
+// https://pay.weixin.qq.com/doc/v3/merchant/4012791907
 func (wx *Wxpay) Notify(req *http.Request) (*Trade, string, error) {
+	var (
+		txn        *models.Transaction
+		outTradeNo string
+	)
+	_, err := wx.client.HandlePaidNotify(req, func(message *notifyRequest.RequestNotify, transaction *models.Transaction, fail func(message string)) interface{} {
+		txn = transaction
+		outTradeNo = transaction.OutTradeNo
+		return nil
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	if txn == nil {
+		return nil, "", errors.New("wechatpay: empty notify transaction")
+	}
+	return &Trade{Transaction: convertTransaction(txn)}, outTradeNo, nil
+}
 
-	mchPrivateKey, err := wxutils.LoadPrivateKey(wx.config.MchPrivateKey)
-	if err != nil {
-		return nil, "", fmt.Errorf("load private key fail: %w", err)
+// convertTransaction 回调通知的 Transaction 转为查询订单的 ResponseOrder，统一 Trade.Transaction 类型
+func convertTransaction(txn *models.Transaction) *wxresponse.ResponseOrder {
+	if txn == nil {
+		return nil
 	}
-	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
-	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(context.Background(), mchPrivateKey, wx.config.MchCertificateSerialNumber, wx.config.MchID, wx.config.MchAPIv3Key)
-	if err != nil {
-		return nil, "", fmt.Errorf("register download with private key fail: %w", err)
+	return &wxresponse.ResponseOrder{
+		Amount:         txn.Amount,
+		AppID:          txn.AppID,
+		Attach:         txn.Attach,
+		BankType:       txn.BankType,
+		MchID:          txn.MchID,
+		OutTradeNo:     txn.OutTradeNo,
+		Payer:          txn.Payer,
+		SuccessTime:    txn.SuccessTime,
+		TradeState:     txn.TradeState,
+		TradeStateDesc: txn.TradeStateDesc,
+		TradeType:      txn.TradeType,
+		TransactionID:  txn.TransactionID,
+		SceneInfo:      txn.SceneInfo,
 	}
-	// 2. 获取商户号对应的微信支付平台证书访问器
-	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(wx.config.MchID)
-	// 3. 使用证书访问器初始化 `notify.Handler`
-	handler, err := notify.NewRSANotifyHandler(wx.config.MchAPIv3Key, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
-	if err != nil {
-		return nil, "", fmt.Errorf("new notify handler fail: %w", err)
-	}
+}
 
-	transaction := new(payments.Transaction)
-	_, err = handler.ParseNotifyRequest(context.Background(), req, transaction)
-	if err != nil {
-		// 如果验签未通过，或者解密失败
-		return nil, "", fmt.Errorf("parse notify request fail: %w", err)
+func loadRSAPrivateKey(pemStr string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, errors.New("wechatpay: invalid private key PEM")
 	}
-	// 处理通知内容
-	// fmt.Println(notifyReq.Summary)
-	// fmt.Println(transaction.TransactionId)
-	return &Trade{Transaction: transaction}, *transaction.OutTradeNo, nil
+	if key, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
+		rsaKey, ok := key.(*rsa.PrivateKey)
+		if !ok {
+			return nil, errors.New("wechatpay: private key is not RSA")
+		}
+		return rsaKey, nil
+	}
+	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }

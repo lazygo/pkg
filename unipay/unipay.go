@@ -3,8 +3,8 @@ package unipay
 import (
 	"net/http"
 
+	wxresponse "github.com/ArtisanCloud/PowerWeChat/v3/src/payment/order/response"
 	"github.com/smartwalle/alipay/v3"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 )
 
 type unipay interface {
@@ -15,7 +15,7 @@ type unipay interface {
 }
 
 type Trade struct {
-	TradeQueryRsp *alipay.TradeQueryRsp `json:"TradeQueryRsp,omitempty"`
-	Notification  *alipay.Notification  `json:"Notification,omitempty"`
-	Transaction   *payments.Transaction `json:"Transaction,omitempty"`
+	TradeQueryRsp *alipay.TradeQueryRsp     `json:"TradeQueryRsp,omitempty"`
+	Notification  *alipay.Notification      `json:"Notification,omitempty"`
+	Transaction   *wxresponse.ResponseOrder `json:"Transaction,omitempty"`
 }

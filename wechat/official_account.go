@@ -1,13 +1,9 @@
 package wechat
 
 import (
-	"github.com/silenceper/wechat/v2"
-	"github.com/silenceper/wechat/v2/cache"
-	"github.com/silenceper/wechat/v2/officialaccount"
-	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/kernel"
+	"github.com/ArtisanCloud/PowerWeChat/v3/src/officialAccount"
 )
-
-var officialAccountConfig *offConfig.Config
 
 type OfficialAccountConfig struct {
 	AppID          string `json:"appid" toml:"appid"`
@@ -16,18 +12,26 @@ type OfficialAccountConfig struct {
 	EncodingAESKey string `json:"encoding_aes_key" toml:"encoding_aes_key"`
 }
 
-func InitOfficialAccount(config OfficialAccountConfig, cache cache.Cache) error {
-	// 使用memcache保存access_token，也可选择redis或自定义cache
-	officialAccountConfig = &offConfig.Config{
-		AppID:          config.AppID,
-		AppSecret:      config.AppSecret,
-		Token:          config.Token,
-		EncodingAESKey: config.EncodingAESKey,
-		Cache:          cache,
+var officialAccountApp *officialAccount.OfficialAccount
+
+// InitOfficialAccount 初始化默认公众号实例
+// cache 传 nil 时使用进程内缓存，多实例部署可传入 redis 等共享缓存驱动（kernel.NewRedisClient）
+func InitOfficialAccount(config OfficialAccountConfig, cache kernel.CacheInterface) error {
+	app, err := officialAccount.NewOfficialAccount(&officialAccount.UserConfig{
+		AppID:  config.AppID,
+		Secret: config.AppSecret,
+		Token:  config.Token,
+		AESKey: config.EncodingAESKey,
+		Cache:  cache,
+	})
+	if err != nil {
+		return err
 	}
+	officialAccountApp = app
 	return nil
 }
 
-func OfficialAccount() *officialaccount.OfficialAccount {
-	return wechat.NewWechat().GetOfficialAccount(officialAccountConfig)
+// OfficialAccount 返回 InitOfficialAccount 初始化的实例
+func OfficialAccount() *officialAccount.OfficialAccount {
+	return officialAccountApp
 }
