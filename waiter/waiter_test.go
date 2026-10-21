@@ -144,7 +144,7 @@ func TestWaiter_ConcurrentStress(t *testing.T) {
 	r := NewWaiter[int]()
 	const n = 64
 	done := make(chan struct{}, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		go func(i int) {
 			defer func() { done <- struct{}{} }()
 			id := fmt.Sprintf("stress-%d", i%8)
@@ -160,7 +160,7 @@ func TestWaiter_ConcurrentStress(t *testing.T) {
 			wait()
 		}(i)
 	}
-	for i := 0; i < n; i++ {
+	for range n {
 		<-done
 	}
 }

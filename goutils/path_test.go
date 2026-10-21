@@ -53,3 +53,27 @@ func TestIsValudPath(t *testing.T) {
 		}
 	}
 }
+
+func TestIsValidPathRoot(t *testing.T) {
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{"/", true},
+		{"/usr/local/bin", true},
+		{"/trailing/", true},
+		{"/path with space/中文目录", true},
+		{"usr/local", false},
+		{"", false},
+		{"C:\\Windows\\System32", true},
+		{"C:/Windows/System32", true},
+		{"C:\\", true},
+		{"C:", false},
+		{"/bad<name>", false},
+	}
+	for _, c := range cases {
+		if got := IsValidPath(c.path); got != c.want {
+			t.Errorf("IsValidPath(%q) = %v, want %v", c.path, got, c.want)
+		}
+	}
+}

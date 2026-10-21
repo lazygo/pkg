@@ -3,14 +3,14 @@ module github.com/lazygo/pkg
 go 1.26.0
 
 require (
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.45
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.57
 	github.com/cristalhq/jwt/v5 v5.4.0
-	github.com/shirou/gopsutil/v4 v4.26.8
+	github.com/shirou/gopsutil/v4 v4.26.9
 	github.com/smartwalle/alipay/v3 v3.2.31
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.188
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.196
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.172
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.75
-	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba
+	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e
 	golang.org/x/time v0.16.0
 )
 
@@ -21,7 +21,7 @@ require (
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/ebitengine/purego v0.10.2 // indirect
+	github.com/ebitengine/purego v0.11.1 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -30,14 +30,13 @@ require (
 	github.com/mozillazg/go-httpheader v0.4.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
+	github.com/power-devops/perfstat v0.0.0-20260805114148-88456608a4f6 // indirect
 	github.com/redis/go-redis/v9 v9.6.3 // indirect
 	github.com/smartwalle/ncrypto v1.0.4 // indirect
 	github.com/smartwalle/ngx v1.1.2 // indirect
 	github.com/smartwalle/nsign v1.0.9 // indirect
-	github.com/stretchr/testify v1.12.1 // indirect
-	github.com/tklauser/go-sysconf v0.3.16 // indirect
-	github.com/tklauser/numcpus v0.11.0 // indirect
+	github.com/tklauser/go-sysconf v0.4.0 // indirect
+	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/otel v1.4.0 // indirect
 	go.opentelemetry.io/otel/trace v1.4.0 // indirect

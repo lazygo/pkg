@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -22,7 +23,7 @@ import (
 
 func CutRune(str string, n int) string {
 	r := []rune(str)
-	if len(r) > n {
+	if n >= 0 && len(r) > n {
 		r = r[:n]
 	}
 	return string(r)
@@ -33,14 +34,17 @@ const lowers = "0123456789abcdefghijklmnopqrstuvwxyz"
 const base58Alphabets = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 const base33Alphabets = "123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
-var src = rand.NewSource(time.Now().UnixNano())
-
 const (
 	// 6 bits to represent a letter index
 	letterIdBits = 6
 	// All 1-bits as many as letterIdBits
 	letterIdMask = 1<<letterIdBits - 1
 	letterIdMax  = 63 / letterIdBits
+)
+
+var (
+	src     = rand.NewSource(time.Now().UnixNano())
+	srcLock sync.Mutex
 )
 
 func RandStr(n int) string {
@@ -51,12 +55,18 @@ func RandLowerStr(n int) string {
 	return randStr(lowers, n)
 }
 
+func randInt63() int64 {
+	srcLock.Lock()
+	defer srcLock.Unlock()
+	return src.Int63()
+}
+
 func randStr(l string, n int) string {
 	b := make([]byte, n)
 	// A rand.Int63() generates 63 random bits, enough for letterIdMax letters!
-	for i, cache, remain := n-1, src.Int63(), letterIdMax; i >= 0; {
+	for i, cache, remain := n-1, randInt63(), letterIdMax; i >= 0; {
 		if remain == 0 {
-			cache, remain = src.Int63(), letterIdMax
+			cache, remain = randInt63(), letterIdMax
 		}
 		if idx := int(cache & letterIdMask); idx < len(l) {
 			b[i] = l[idx]
@@ -113,6 +123,9 @@ func EncodeUint64(u uint64) string {
 func DecodeUint64(v string) uint64 {
 	b := make([]byte, 8)
 	bu := Base58Decode([]byte(v))
+	if len(bu) > 8 {
+		bu = bu[len(bu)-8:]
+	}
 	copy(b[8-len(bu):], bu)
 	return binary.BigEndian.Uint64(b)
 }
@@ -240,11 +253,15 @@ func Base58Decode(input []byte) []byte {
 	result := big.NewInt(0)
 	for _, b := range input {
 		charIndex := strings.IndexByte(base58Alphabets, b)
+		if charIndex < 0 {
+			// 无效字符
+			return nil
+		}
 		result.Mul(result, big.NewInt(58))
 		result.Add(result, big.NewInt(int64(charIndex)))
 	}
 	decoded := result.Bytes()
-	if input[0] == base58Alphabets[0] {
+	if len(input) > 0 && input[0] == base58Alphabets[0] {
 		decoded = append([]byte{0x00}, decoded...)
 	}
 	return decoded
@@ -280,4 +297,44 @@ func ContainsAny(str string, in []string) bool {
 	return slices.ContainsFunc(in, func(v string) bool {
 		return strings.Contains(str, v)
 	})
+}
+
+// ToSnakeString snake string, XxYy to xx_yy , XxYY to xx_yy
+func ToSnakeString(s string) string {
+	data := make([]byte, 0, len(s)*2)
+	for i := range len(s) {
+		d := s[i]
+		if i > 0 && d >= 'A' && d <= 'Z' {
+			prev := s[i-1]
+			if prev >= 'a' && prev <= 'z' || prev >= '0' && prev <= '9' {
+				data = append(data, '_')
+			}
+		}
+		data = append(data, d)
+	}
+	return strings.ToLower(string(data[:]))
+}
+
+// ToCamelString camel string, xx_yy to XxYy
+func ToCamelString(s string) string {
+	data := make([]byte, 0, len(s))
+	j := false
+	k := false
+	for i := range len(s) {
+		d := s[i]
+		if k == false && d >= 'A' && d <= 'Z' {
+			k = true
+		}
+		if d >= 'a' && d <= 'z' && (j || k == false) {
+			d = d - 32
+			j = false
+			k = true
+		}
+		if k && d == '_' && i+1 < len(s) && s[i+1] >= 'a' && s[i+1] <= 'z' {
+			j = true
+			continue
+		}
+		data = append(data, d)
+	}
+	return string(data[:])
 }

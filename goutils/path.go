@@ -48,7 +48,7 @@ func isAbsoluteWindowsPath(path string) bool {
 // isValidLinuxPathFormat validates the Linux path format using regex.
 func isValidLinuxPathFormat(path string) bool {
 	// Linux path regex: starts with a slash and contains valid characters including Chinese and spaces.
-	regex := `^(/[^/<>:"|?*\r\n]+)+/?$`
+	regex := `^(/[^/<>:"|?*\r\n]+)+/?$|^/$`
 	re := regexp.MustCompile(regex)
 	return re.MatchString(path)
 }

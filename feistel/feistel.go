@@ -12,7 +12,7 @@ func EncryptUint32(id uint32, key0, key1 uint16) uint32 {
 	left := uint16(id >> 16)
 	right := uint16(id)
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		left, right = feistelRound(left, right, key0)
 		left, right = feistelRound(left, right, key1)
 	}
@@ -25,7 +25,7 @@ func DecryptUint32(encrypted uint32, key0, key1 uint16) uint32 {
 	left := uint16(encrypted >> 16)
 	right := uint16(encrypted)
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		left, right = feistelRound(left, right, key1)
 		left, right = feistelRound(left, right, key0)
 	}
