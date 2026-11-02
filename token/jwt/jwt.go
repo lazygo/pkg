@@ -12,7 +12,10 @@ import (
 	"github.com/lazygo/pkg/token"
 )
 
-type Claims = jwt.RegisteredClaims
+type Claims struct {
+	jwt.RegisteredClaims
+	Extra map[string]any `json:"extra"`
+}
 type Audience = jwt.Audience
 type Validator func(*Claims) error
 

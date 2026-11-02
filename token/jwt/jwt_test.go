@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/cristalhq/jwt/v5"
 )
 
 // openssl genrsa -out rsa_private_key.pem 1024
@@ -40,7 +42,7 @@ func TestJwt2(t *testing.T) {
 		return
 	}
 
-	token, err := enc.Encode(&Claims{Subject: "5"})
+	token, err := enc.Encode(&Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: "5"}, Extra: map[string]any{}})
 	if err != nil {
 		t.Error(err)
 		return
@@ -89,7 +91,7 @@ OU7cwpdopPhJ/J6Q+wIDAQAB
 	}
 
 	id := "1"
-	token, err := encoder.Encode(&Claims{Subject: id})
+	token, err := encoder.Encode(&Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: id}, Extra: map[string]any{}})
 	if err != nil {
 		t.Error(err)
 	}
@@ -108,7 +110,7 @@ OU7cwpdopPhJ/J6Q+wIDAQAB
 	id = "2"
 	issuer := "p2link.cn"
 	audience := "p"
-	token, err = encoder.Encode(&Claims{Subject: id, Issuer: issuer, Audience: Audience{audience}})
+	token, err = encoder.Encode(&Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: id, Issuer: issuer, Audience: jwt.Audience{audience}}, Extra: map[string]any{}})
 	if err != nil {
 		t.Error(err)
 	}
