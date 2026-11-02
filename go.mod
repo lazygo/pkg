@@ -3,25 +3,25 @@ module github.com/lazygo/pkg
 go 1.26.0
 
 require (
-	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.57
+	github.com/ArtisanCloud/PowerWeChat/v3 v3.4.58
 	github.com/cristalhq/jwt/v5 v5.4.0
-	github.com/shirou/gopsutil/v4 v4.26.9
+	github.com/shirou/gopsutil/v4 v4.26.10
 	github.com/smartwalle/alipay/v3 v3.2.31
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.196
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.205
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.172
-	github.com/tencentyun/cos-go-sdk-v5 v0.7.75
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.76
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e
 	golang.org/x/time v0.16.0
 )
 
 require (
 	github.com/ArtisanCloud/PowerLibs/v3 v3.3.2 // indirect
-	github.com/ArtisanCloud/PowerSocialite/v3 v3.0.11 // indirect
+	github.com/ArtisanCloud/PowerSocialite/v3 v3.0.12 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/ebitengine/purego v0.11.1 // indirect
+	github.com/ebitengine/purego v0.11.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
