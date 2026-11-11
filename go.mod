@@ -7,10 +7,10 @@ require (
 	github.com/cristalhq/jwt/v5 v5.4.0
 	github.com/shirou/gopsutil/v4 v4.26.10
 	github.com/smartwalle/alipay/v3 v3.2.31
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.205
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.212
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.172
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.76
-	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e
+	golang.org/x/exp v0.0.0-20261109185158-a52e3aef5920
 	golang.org/x/time v0.16.0
 )
 
